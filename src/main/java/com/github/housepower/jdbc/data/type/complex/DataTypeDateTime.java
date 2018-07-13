@@ -1,11 +1,13 @@
 package com.github.housepower.jdbc.data.type.complex;
 
+import com.github.housepower.jdbc.connect.PhysicalInfo;
 import com.github.housepower.jdbc.misc.SQLLexer;
 import com.github.housepower.jdbc.misc.StringView;
 import com.github.housepower.jdbc.misc.Validate;
 import com.github.housepower.jdbc.serializer.BinaryDeserializer;
 import com.github.housepower.jdbc.serializer.BinarySerializer;
 import com.github.housepower.jdbc.data.IDataType;
+import com.github.housepower.jdbc.settings.SettingKey;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -17,13 +19,16 @@ public class DataTypeDateTime implements IDataType {
 
     private static final Timestamp DEFAULT_VALUE = new Timestamp(0);
 
-    private final int offset;
+    private int offset;
     private final String name;
 
-    public DataTypeDateTime(String name, TimeZone timeZone) {
+    public DataTypeDateTime(String name, PhysicalInfo.ServerInfo serverInfo) {
         this.name = name;
         long now = System.currentTimeMillis();
-        this.offset = TimeZone.getDefault().getOffset(now) - timeZone.getOffset(now);
+
+        if (! java.lang.Boolean.TRUE.equals(serverInfo.getConfigure().settings().get(SettingKey.use_client_time_zone))) {
+            this.offset = TimeZone.getDefault().getOffset(now) - serverInfo.timeZone().getOffset(now);
+        }
     }
 
     @Override
@@ -92,14 +97,14 @@ public class DataTypeDateTime implements IDataType {
         return data;
     }
 
-    public static IDataType createDateTimeType(SQLLexer lexer, TimeZone timeZone) throws SQLException {
+    public static IDataType createDateTimeType(SQLLexer lexer, PhysicalInfo.ServerInfo serverInfo) throws SQLException {
         if (lexer.isCharacter('(')) {
             Validate.isTrue(lexer.character() == '(');
             StringView dataTimeZone = lexer.stringLiteral();
             Validate.isTrue(lexer.character() == ')');
             return new DataTypeDateTime("DateTime(" +
-                String.valueOf(dataTimeZone) + ")", TimeZone.getTimeZone(String.valueOf(dataTimeZone)));
+                String.valueOf(dataTimeZone) + ")", serverInfo);
         }
-        return new DataTypeDateTime("DateTime", timeZone);
+        return new DataTypeDateTime("DateTime", serverInfo);
     }
 }

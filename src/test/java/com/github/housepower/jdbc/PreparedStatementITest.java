@@ -146,14 +146,18 @@ public class PreparedStatementITest extends AbstractITest {
                 Statement statement = connection.createStatement();
 
                 statement.execute("DROP TABLE IF EXISTS test");
-                statement.execute("CREATE TABLE test(id UInt8)ENGINE = Log");
+                statement.execute("CREATE TABLE test(id UInt8, day Date, time DateTime)ENGINE = Log");
 
                 PreparedStatement preparedStatement =
-                    connection.prepareStatement("INSERT INTO test VALUES(1)(?)(3)(?)");
+                    connection.prepareStatement("INSERT INTO test VALUES(?, ?, ?)");
 
-                preparedStatement.setByte(1, (byte) 2);
-                preparedStatement.setByte(2, (byte) 4);
-                Assert.assertEquals(preparedStatement.executeUpdate(), 4);
+                // 2018-07-01 19:00:00  Asia/Shanghai
+                long time = 1530374400 + 19 * 3600;
+
+                preparedStatement.setByte(1, (byte)1);
+                preparedStatement.setDate(2, new Date(time * 1000));
+                preparedStatement.setTimestamp(3, new Timestamp(time * 1000));
+                Assert.assertEquals(preparedStatement.executeUpdate(), 1);
             }
         });
     }
