@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 public class DataTypeDate implements IDataType {
@@ -25,7 +24,7 @@ public class DataTypeDate implements IDataType {
     public DataTypeDate(PhysicalInfo.ServerInfo serverInfo) {
         long now = System.currentTimeMillis();
         if (! java.lang.Boolean.TRUE.equals(serverInfo.getConfigure().settings().get(SettingKey.use_client_time_zone))) {
-            this.offset += TimeZone.getDefault().getOffset(now);
+            this.offset += serverInfo.timeZone().getOffset(now);
         }
     }
 
